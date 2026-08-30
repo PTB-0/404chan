@@ -1,7 +1,10 @@
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const db = require('../db');
 const upload = require('../upload');
-const { parseNameAndTrip } = require('../util');
+const { ADMIN_KEY } = require('../config');
+const { parseNameAndTrip, hashDeletePassword, verifyDeletePassword } = require('../util');
 
 const router = express.Router();
 
@@ -12,6 +15,17 @@ function getBoardOr404(req, res) {
     return null;
   }
   return board;
+}
+
+function removeUploadedImage(imagePath) {
+  if (!imagePath) return;
+  const filePath = path.join(__dirname, '..', '..', 'public', imagePath);
+  fs.unlink(filePath, () => {});
+}
+
+function canDelete(providedKey, providedPassword, storedHash) {
+  if (providedKey && providedKey === ADMIN_KEY) return true;
+  return verifyDeletePassword(providedPassword, storedHash);
 }
 
 router.get('/', (req, res) => {
@@ -26,6 +40,36 @@ router.get('/', (req, res) => {
     return { ...b, threadCount: stats.threadCount, lastActivity: latest ? latest.bumped_at : null };
   });
   res.render('home', { title: '404chan - Teknoloji Panosu', boards: boardStats });
+});
+
+router.get('/ara', (req, res) => {
+  const q = (req.query.q || '').trim().slice(0, 100);
+  let results = [];
+
+  if (q) {
+    const like = `%${q}%`;
+    const threadMatches = db
+      .prepare(
+        `SELECT id AS thread_id, board_id, subject, message, created_at, id AS post_id, 'thread' AS kind
+         FROM threads WHERE subject LIKE ? OR message LIKE ?
+         ORDER BY created_at DESC LIMIT 40`
+      )
+      .all(like, like);
+
+    const postMatches = db
+      .prepare(
+        `SELECT thread_id, board_id, message, created_at, id AS post_id, 'post' AS kind
+         FROM posts WHERE message LIKE ?
+         ORDER BY created_at DESC LIMIT 40`
+      )
+      .all(like);
+
+    results = [...threadMatches, ...postMatches]
+      .sort((a, b) => b.created_at - a.created_at)
+      .slice(0, 50);
+  }
+
+  res.render('search', { title: `"${q}" için arama sonuçları`, q, results });
 });
 
 router.get('/b/:boardId', (req, res) => {
@@ -55,12 +99,13 @@ router.post('/b/:boardId/new', upload.single('image'), (req, res) => {
   }
 
   const { name, tripcode } = parseNameAndTrip(req.body.name);
+  const deletePasswordHash = hashDeletePassword(req.body.password);
   const now = Date.now();
 
   const info = db
     .prepare(
-      `INSERT INTO threads (board_id, subject, name, tripcode, message, image_path, image_name, created_at, bumped_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO threads (board_id, subject, name, tripcode, message, image_path, image_name, created_at, bumped_at, delete_password_hash)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       board.id,
@@ -71,7 +116,8 @@ router.post('/b/:boardId/new', upload.single('image'), (req, res) => {
       req.file ? `/uploads/${req.file.filename}` : null,
       req.file ? req.file.originalname : null,
       now,
-      now
+      now,
+      deletePasswordHash
     );
 
   res.redirect(`/b/${board.id}/thread/${info.lastInsertRowid}`);
@@ -103,11 +149,12 @@ router.post('/b/:boardId/thread/:threadId/reply', upload.single('image'), (req, 
   }
 
   const { name, tripcode } = parseNameAndTrip(req.body.name);
+  const deletePasswordHash = hashDeletePassword(req.body.password);
   const now = Date.now();
 
   db.prepare(
-    `INSERT INTO posts (thread_id, board_id, name, tripcode, message, image_path, image_name, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO posts (thread_id, board_id, name, tripcode, message, image_path, image_name, created_at, delete_password_hash)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     thread.id,
     board.id,
@@ -116,7 +163,8 @@ router.post('/b/:boardId/thread/:threadId/reply', upload.single('image'), (req, 
     message,
     req.file ? `/uploads/${req.file.filename}` : null,
     req.file ? req.file.originalname : null,
-    now
+    now,
+    deletePasswordHash
   );
 
   db.prepare('UPDATE threads SET reply_count = reply_count + 1, bumped_at = ? WHERE id = ?').run(
@@ -125,6 +173,68 @@ router.post('/b/:boardId/thread/:threadId/reply', upload.single('image'), (req, 
   );
 
   res.redirect(`/b/${board.id}/thread/${thread.id}#bottom`);
+});
+
+router.post('/b/:boardId/thread/:threadId/delete', (req, res) => {
+  const board = getBoardOr404(req, res);
+  if (!board) return;
+  const thread = db
+    .prepare('SELECT * FROM threads WHERE id = ? AND board_id = ?')
+    .get(req.params.threadId, board.id);
+  if (!thread) return res.status(404).render('404', { title: 'Konu bulunamadı' });
+
+  if (!canDelete(req.body.key, req.body.password, thread.delete_password_hash)) {
+    return res.status(403).render('404', { title: 'Yetkisiz', message: 'Şifre hatalı.' });
+  }
+
+  const posts = db.prepare('SELECT image_path FROM posts WHERE thread_id = ?').all(thread.id);
+  posts.forEach((p) => removeUploadedImage(p.image_path));
+  removeUploadedImage(thread.image_path);
+
+  db.prepare('DELETE FROM posts WHERE thread_id = ?').run(thread.id);
+  db.prepare('DELETE FROM threads WHERE id = ?').run(thread.id);
+
+  res.redirect(`/b/${board.id}`);
+});
+
+router.post('/b/:boardId/thread/:threadId/post/:postId/delete', (req, res) => {
+  const board = getBoardOr404(req, res);
+  if (!board) return;
+  const post = db
+    .prepare('SELECT * FROM posts WHERE id = ? AND thread_id = ? AND board_id = ?')
+    .get(req.params.postId, req.params.threadId, board.id);
+  if (!post) return res.status(404).render('404', { title: 'Gönderi bulunamadı' });
+
+  if (!canDelete(req.body.key, req.body.password, post.delete_password_hash)) {
+    return res.status(403).render('404', { title: 'Yetkisiz', message: 'Şifre hatalı.' });
+  }
+
+  removeUploadedImage(post.image_path);
+  db.prepare('DELETE FROM posts WHERE id = ?').run(post.id);
+  db.prepare('UPDATE threads SET reply_count = MAX(reply_count - 1, 0) WHERE id = ?').run(
+    req.params.threadId
+  );
+
+  res.redirect(`/b/${board.id}/thread/${req.params.threadId}`);
+});
+
+router.post('/b/:boardId/thread/:threadId/report', (req, res) => {
+  const board = getBoardOr404(req, res);
+  if (!board) return;
+  db.prepare('UPDATE threads SET report_count = report_count + 1 WHERE id = ? AND board_id = ?').run(
+    req.params.threadId,
+    board.id
+  );
+  res.redirect(`/b/${board.id}/thread/${req.params.threadId}`);
+});
+
+router.post('/b/:boardId/thread/:threadId/post/:postId/report', (req, res) => {
+  const board = getBoardOr404(req, res);
+  if (!board) return;
+  db.prepare(
+    'UPDATE posts SET report_count = report_count + 1 WHERE id = ? AND thread_id = ? AND board_id = ?'
+  ).run(req.params.postId, req.params.threadId, board.id);
+  res.redirect(`/b/${board.id}/thread/${req.params.threadId}`);
 });
 
 module.exports = router;

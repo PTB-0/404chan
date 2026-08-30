@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS threads (
   bumped_at INTEGER NOT NULL,
   reply_count INTEGER NOT NULL DEFAULT 0,
   is_pinned INTEGER NOT NULL DEFAULT 0,
+  delete_password_hash TEXT,
+  report_count INTEGER NOT NULL DEFAULT 0,
   FOREIGN KEY (board_id) REFERENCES boards(id)
 );
 
@@ -42,6 +44,8 @@ CREATE TABLE IF NOT EXISTS posts (
   image_path TEXT,
   image_name TEXT,
   created_at INTEGER NOT NULL,
+  delete_password_hash TEXT,
+  report_count INTEGER NOT NULL DEFAULT 0,
   FOREIGN KEY (thread_id) REFERENCES threads(id)
 );
 

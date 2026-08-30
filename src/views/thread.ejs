@@ -15,6 +15,10 @@
     </a>
   <% } %>
   <div class="post-message"><%- formatMessage(thread.message) %></div>
+  <%- include('partials/post_actions', {
+    reportUrl: `/b/${board.id}/thread/${thread.id}/report`,
+    deleteUrl: `/b/${board.id}/thread/${thread.id}/delete`,
+  }) %>
 </article>
 
 <section class="post-list">
@@ -31,6 +35,10 @@
         </a>
       <% } %>
       <div class="post-message"><%- formatMessage(post.message) %></div>
+      <%- include('partials/post_actions', {
+        reportUrl: `/b/${board.id}/thread/${thread.id}/post/${post.id}/report`,
+        deleteUrl: `/b/${board.id}/thread/${thread.id}/post/${post.id}/delete`,
+      }) %>
     </article>
   <% }); %>
 </section>
@@ -46,6 +54,7 @@
     <textarea name="message" placeholder="Mesajınız... (>>123 ile yanıt verin)" rows="4" maxlength="4000"></textarea>
     <div class="form-row">
       <input type="file" name="image" accept="image/png,image/jpeg,image/gif,image/webp">
+      <input type="password" name="password" placeholder="Silme şifresi (opsiyonel)" maxlength="60">
       <button type="submit" class="btn">Yanıtla</button>
     </div>
   </form>

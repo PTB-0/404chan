@@ -1,0 +1,62 @@
+<div class="board-header">
+  <h1>Moderasyon Paneli</h1>
+  <p>Bildirilen konular/gönderiler ve sabitlenmiş konular.</p>
+</div>
+
+<section class="post-box">
+  <h2>Sabitlenmiş Konular (<%= pinnedThreads.length %>)</h2>
+  <% if (pinnedThreads.length === 0) { %><p class="empty-state">Sabit konu yok.</p><% } %>
+  <% pinnedThreads.forEach(function(t) { %>
+    <div class="mod-row">
+      <a href="/b/<%= t.board_id %>/thread/<%= t.id %>">/<%= t.board_id %>/ — <%= t.subject || ('Konu #' + t.id) %></a>
+      <form action="/mod/thread/<%= t.id %>/pin" method="POST">
+        <input type="hidden" name="key" value="<%= key %>">
+        <button type="submit" class="btn-link">Sabitlemeyi kaldır</button>
+      </form>
+    </div>
+  <% }); %>
+</section>
+
+<section class="post-box">
+  <h2>Bildirilen Konular (<%= reportedThreads.length %>)</h2>
+  <% if (reportedThreads.length === 0) { %><p class="empty-state">Bildirilen konu yok.</p><% } %>
+  <% reportedThreads.forEach(function(t) { %>
+    <div class="mod-row">
+      <a href="/b/<%= t.board_id %>/thread/<%= t.id %>">/<%= t.board_id %>/ — <%= t.subject || ('Konu #' + t.id) %> (<%= t.report_count %> bildirim)</a>
+      <div class="mod-row-actions">
+        <form action="/mod/thread/<%= t.id %>/pin" method="POST">
+          <input type="hidden" name="key" value="<%= key %>">
+          <button type="submit" class="btn-link"><%= t.is_pinned ? 'Sabiti kaldır' : 'Sabitle' %></button>
+        </form>
+        <form action="/mod/thread/<%= t.id %>/dismiss" method="POST">
+          <input type="hidden" name="key" value="<%= key %>">
+          <button type="submit" class="btn-link">Bildirimi temizle</button>
+        </form>
+        <form action="/mod/thread/<%= t.id %>/delete" method="POST" onsubmit="return confirm('Konu tamamen silinsin mi?')">
+          <input type="hidden" name="key" value="<%= key %>">
+          <button type="submit" class="btn-link" style="color: var(--danger);">Sil</button>
+        </form>
+      </div>
+    </div>
+  <% }); %>
+</section>
+
+<section class="post-box">
+  <h2>Bildirilen Yanıtlar (<%= reportedPosts.length %>)</h2>
+  <% if (reportedPosts.length === 0) { %><p class="empty-state">Bildirilen yanıt yok.</p><% } %>
+  <% reportedPosts.forEach(function(p) { %>
+    <div class="mod-row">
+      <a href="/b/<%= p.board_id %>/thread/<%= p.thread_id %>#p<%= p.id %>">/<%= p.board_id %>/ — Yanıt No.<%= p.id %> (<%= p.report_count %> bildirim)</a>
+      <div class="mod-row-actions">
+        <form action="/mod/post/<%= p.id %>/dismiss" method="POST">
+          <input type="hidden" name="key" value="<%= key %>">
+          <button type="submit" class="btn-link">Bildirimi temizle</button>
+        </form>
+        <form action="/mod/post/<%= p.id %>/delete" method="POST" onsubmit="return confirm('Yanıt silinsin mi?')">
+          <input type="hidden" name="key" value="<%= key %>">
+          <button type="submit" class="btn-link" style="color: var(--danger);">Sil</button>
+        </form>
+      </div>
+    </div>
+  <% }); %>
+</section>

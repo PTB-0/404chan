@@ -1,0 +1,9 @@
+<div class="post-actions">
+  <form action="<%= reportUrl %>" method="POST" class="inline-form" onsubmit="return confirm('Bu gönderiyi bildir?')">
+    <button type="submit" class="btn-link small">Bildir</button>
+  </form>
+  <form action="<%= deleteUrl %>" method="POST" class="inline-form" onsubmit="return confirm('Silinsin mi?')">
+    <input type="password" name="password" placeholder="şifre" class="mini-input">
+    <button type="submit" class="btn-link small danger">Sil</button>
+  </form>
+</div>

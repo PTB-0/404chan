@@ -50,12 +50,28 @@ a:hover { text-decoration: underline; }
 }
 .logo span { color: var(--accent); }
 
+.main-nav {
+  display: flex;
+  align-items: center;
+}
 .main-nav a {
   margin-left: 20px;
   color: var(--text);
   font-weight: bold;
 }
 .main-nav a:hover { color: var(--accent); }
+
+.nav-search { margin-left: 20px; }
+.nav-search input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  width: 140px;
+}
 
 .content {
   max-width: 1100px;
@@ -141,6 +157,14 @@ a:hover { text-decoration: underline; }
   color: var(--link);
   font-weight: bold;
 }
+button.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-mono);
+  cursor: pointer;
+}
+button.btn-link:hover { text-decoration: underline; }
 
 .board-header { margin-bottom: 20px; }
 .board-header h1 { color: var(--accent); margin-bottom: 4px; }
@@ -221,6 +245,41 @@ a:hover { text-decoration: underline; }
 .reply-preview-item { font-size: 13px; }
 
 .thread-card-foot { margin-top: 10px; }
+
+.post-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+.inline-form { display: flex; align-items: center; gap: 6px; }
+.btn-link.small { font-size: 12px; background: none; border: none; padding: 0; cursor: pointer; }
+.btn-link.danger { color: var(--danger); }
+.mini-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  width: 90px;
+}
+
+.mod-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.mod-row-actions { display: flex; gap: 12px; }
+.mod-row-actions form { display: inline; }
 
 .post-list { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
 .reply-post { margin-left: 20px; }

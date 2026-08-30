@@ -6,6 +6,7 @@ const { Server } = require('socket.io');
 
 const boardsRouter = require('./src/routes/boards');
 const chatRouter = require('./src/routes/chat');
+const modRouter = require('./src/routes/mod');
 const registerChatSocket = require('./src/chatSocket');
 const { formatMessage, timeAgo, formatDate } = require('./src/util');
 
@@ -34,6 +35,7 @@ app.use((req, res, next) => {
 
 app.use('/', boardsRouter);
 app.use('/', chatRouter);
+app.use('/', modRouter);
 
 app.use((req, res) => {
   res.status(404).render('404', { title: 'Sayfa bulunamadı' });

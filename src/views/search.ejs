@@ -1,0 +1,30 @@
+<div class="board-header">
+  <h1>Arama</h1>
+  <form action="/ara" method="GET" class="post-form">
+    <div class="form-row">
+      <input type="text" name="q" value="<%= q %>" placeholder="Konu, mesaj içinde ara..." maxlength="100">
+      <button type="submit" class="btn">Ara</button>
+    </div>
+  </form>
+</div>
+
+<% if (q && results.length === 0) { %>
+  <p class="empty-state">"<%= q %>" için sonuç bulunamadı.</p>
+<% } %>
+
+<section class="thread-list">
+  <% results.forEach(function(r) { %>
+    <article class="thread-card">
+      <div class="thread-card-head">
+        <span class="board-tag">/<%= r.board_id %>/</span>
+        <% if (r.subject) { %><span class="thread-subject"><%= r.subject %></span><% } %>
+        <span class="post-time"><%= formatDate(r.created_at) %></span>
+        <span class="post-no"><%= r.kind === 'thread' ? 'Konu' : 'Yanıt' %> No.<%= r.post_id %></span>
+      </div>
+      <div class="post-message"><%- formatMessage(r.message) %></div>
+      <div class="thread-card-foot">
+        <a href="/b/<%= r.board_id %>/thread/<%= r.thread_id %>#p<%= r.post_id %>" class="btn-link">Konuya Git &rarr;</a>
+      </div>
+    </article>
+  <% }); %>
+</section>

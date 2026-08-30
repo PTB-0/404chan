@@ -1,0 +1,10 @@
+<section class="post-box" style="max-width: 400px; margin: 40px auto;">
+  <h2>Moderasyon Girişi</h2>
+  <% if (typeof error !== 'undefined' && error) { %>
+    <p style="color: var(--danger);"><%= error %></p>
+  <% } %>
+  <form action="/mod" method="GET" class="post-form">
+    <input type="password" name="key" placeholder="Admin anahtarı" required>
+    <button type="submit" class="btn">Giriş</button>
+  </form>
+</section>

@@ -64,4 +64,23 @@ function formatDate(timestamp) {
   });
 }
 
-module.exports = { escapeHtml, parseNameAndTrip, formatMessage, timeAgo, formatDate };
+function hashDeletePassword(password) {
+  const trimmed = (password || '').trim();
+  if (!trimmed) return null;
+  return crypto.createHash('sha256').update(trimmed).digest('hex');
+}
+
+function verifyDeletePassword(password, hash) {
+  if (!hash || !password) return false;
+  return hashDeletePassword(password) === hash;
+}
+
+module.exports = {
+  escapeHtml,
+  parseNameAndTrip,
+  formatMessage,
+  timeAgo,
+  formatDate,
+  hashDeletePassword,
+  verifyDeletePassword,
+};
