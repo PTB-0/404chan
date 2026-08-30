@@ -99,17 +99,30 @@ a:hover { text-decoration: underline; }
 }
 
 .board-card {
-  display: block;
   background: var(--bg-alt);
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 14px;
   color: var(--text);
 }
-.board-card:hover {
-  border-color: var(--accent-dim);
-  text-decoration: none;
+.board-card:hover { border-color: var(--accent-dim); }
+
+.board-card-link { display: block; color: var(--text); }
+.board-card-link:hover { text-decoration: none; }
+
+.subboard-list {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
 }
+.subboard-list a { color: var(--text-dim); }
+.subboard-list a:hover { color: var(--accent); }
+
+.subboard-grid { margin-bottom: 24px; }
 
 .board-card-head {
   display: flex;

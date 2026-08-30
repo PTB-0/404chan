@@ -44,6 +44,21 @@ function formatMessage(raw) {
     .join('<br>');
 }
 
+// Boards mirror a Unix directory tree: a top-level board is "/b/id", a
+// board with a parent_id lives one level down as "/b/parentId/id".
+function boardPath(board) {
+  return boardPathFromIds(board.id, board.parent_id);
+}
+
+function boardPathFromIds(id, parentId) {
+  return parentId ? `/b/${parentId}/${id}` : `/b/${id}`;
+}
+
+// Human-facing board label, e.g. "/g/" or "/mec/robotik/" (no leading "/b").
+function boardLabel(board) {
+  return board.parent_id ? `/${board.parent_id}/${board.id}/` : `/${board.id}/`;
+}
+
 function timeAgo(timestamp) {
   const diffMs = Date.now() - timestamp;
   const sec = Math.floor(diffMs / 1000);
@@ -83,4 +98,7 @@ module.exports = {
   formatDate,
   hashDeletePassword,
   verifyDeletePassword,
+  boardPath,
+  boardPathFromIds,
+  boardLabel,
 };

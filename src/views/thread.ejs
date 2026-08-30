@@ -1,5 +1,7 @@
 <div class="breadcrumb">
-  <a href="/b/<%= board.id %>">&larr; /<%= board.id %>/ - <%= board.name %></a>
+  <a href="/">Panolar</a> /
+  <% if (board.parent_id) { %><a href="/b/<%= board.parent_id %>">/<%= board.parent_id %>/</a> / <% } %>
+  <a href="<%= boardPath(board) %>"><%= boardLabel(board) %> - <%= board.name %></a>
 </div>
 
 <article class="thread-card op-post" id="p<%= thread.id %>">
@@ -16,8 +18,8 @@
   <% } %>
   <div class="post-message"><%- formatMessage(thread.message) %></div>
   <%- include('partials/post_actions', {
-    reportUrl: `/b/${board.id}/thread/${thread.id}/report`,
-    deleteUrl: `/b/${board.id}/thread/${thread.id}/delete`,
+    reportUrl: `${boardPath(board)}/thread/${thread.id}/report`,
+    deleteUrl: `${boardPath(board)}/thread/${thread.id}/delete`,
   }) %>
 </article>
 
@@ -36,8 +38,8 @@
       <% } %>
       <div class="post-message"><%- formatMessage(post.message) %></div>
       <%- include('partials/post_actions', {
-        reportUrl: `/b/${board.id}/thread/${thread.id}/post/${post.id}/report`,
-        deleteUrl: `/b/${board.id}/thread/${thread.id}/post/${post.id}/delete`,
+        reportUrl: `${boardPath(board)}/thread/${thread.id}/post/${post.id}/report`,
+        deleteUrl: `${boardPath(board)}/thread/${thread.id}/post/${post.id}/delete`,
       }) %>
     </article>
   <% }); %>
@@ -47,7 +49,7 @@
 
 <section class="post-box">
   <h2>Yanıtla</h2>
-  <form action="/b/<%= board.id %>/thread/<%= thread.id %>/reply" method="POST" enctype="multipart/form-data" class="post-form">
+  <form action="<%= boardPath(board) %>/thread/<%= thread.id %>/reply" method="POST" enctype="multipart/form-data" class="post-form">
     <div class="form-row">
       <input type="text" name="name" placeholder="İsim (opsiyonel, Ad#şifre ile tripcode)" maxlength="60">
     </div>

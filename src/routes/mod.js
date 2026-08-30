@@ -24,15 +24,25 @@ router.get('/mod', (req, res) => {
 
   const reportedThreads = db
     .prepare(
-      `SELECT * FROM threads WHERE report_count > 0 ORDER BY report_count DESC, bumped_at DESC LIMIT 50`
+      `SELECT threads.*, boards.parent_id AS board_parent_id FROM threads
+       JOIN boards ON boards.id = threads.board_id
+       WHERE report_count > 0 ORDER BY report_count DESC, bumped_at DESC LIMIT 50`
     )
     .all();
   const reportedPosts = db
     .prepare(
-      `SELECT * FROM posts WHERE report_count > 0 ORDER BY report_count DESC, created_at DESC LIMIT 50`
+      `SELECT posts.*, boards.parent_id AS board_parent_id FROM posts
+       JOIN boards ON boards.id = posts.board_id
+       WHERE report_count > 0 ORDER BY report_count DESC, created_at DESC LIMIT 50`
     )
     .all();
-  const pinnedThreads = db.prepare('SELECT * FROM threads WHERE is_pinned = 1 ORDER BY bumped_at DESC').all();
+  const pinnedThreads = db
+    .prepare(
+      `SELECT threads.*, boards.parent_id AS board_parent_id FROM threads
+       JOIN boards ON boards.id = threads.board_id
+       WHERE is_pinned = 1 ORDER BY bumped_at DESC`
+    )
+    .all();
 
   res.render('mod_panel', { title: 'Moderasyon Paneli', key, reportedThreads, reportedPosts, pinnedThreads });
 });

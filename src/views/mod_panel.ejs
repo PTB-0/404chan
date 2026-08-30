@@ -8,7 +8,7 @@
   <% if (pinnedThreads.length === 0) { %><p class="empty-state">Sabit konu yok.</p><% } %>
   <% pinnedThreads.forEach(function(t) { %>
     <div class="mod-row">
-      <a href="/b/<%= t.board_id %>/thread/<%= t.id %>">/<%= t.board_id %>/ — <%= t.subject || ('Konu #' + t.id) %></a>
+      <a href="<%= boardPathFromIds(t.board_id, t.board_parent_id) %>/thread/<%= t.id %>"><%= boardLabel({ id: t.board_id, parent_id: t.board_parent_id }) %> — <%= t.subject || ('Konu #' + t.id) %></a>
       <form action="/mod/thread/<%= t.id %>/pin" method="POST">
         <input type="hidden" name="key" value="<%= key %>">
         <button type="submit" class="btn-link">Sabitlemeyi kaldır</button>
@@ -22,7 +22,7 @@
   <% if (reportedThreads.length === 0) { %><p class="empty-state">Bildirilen konu yok.</p><% } %>
   <% reportedThreads.forEach(function(t) { %>
     <div class="mod-row">
-      <a href="/b/<%= t.board_id %>/thread/<%= t.id %>">/<%= t.board_id %>/ — <%= t.subject || ('Konu #' + t.id) %> (<%= t.report_count %> bildirim)</a>
+      <a href="<%= boardPathFromIds(t.board_id, t.board_parent_id) %>/thread/<%= t.id %>"><%= boardLabel({ id: t.board_id, parent_id: t.board_parent_id }) %> — <%= t.subject || ('Konu #' + t.id) %> (<%= t.report_count %> bildirim)</a>
       <div class="mod-row-actions">
         <form action="/mod/thread/<%= t.id %>/pin" method="POST">
           <input type="hidden" name="key" value="<%= key %>">
@@ -46,7 +46,7 @@
   <% if (reportedPosts.length === 0) { %><p class="empty-state">Bildirilen yanıt yok.</p><% } %>
   <% reportedPosts.forEach(function(p) { %>
     <div class="mod-row">
-      <a href="/b/<%= p.board_id %>/thread/<%= p.thread_id %>#p<%= p.id %>">/<%= p.board_id %>/ — Yanıt No.<%= p.id %> (<%= p.report_count %> bildirim)</a>
+      <a href="<%= boardPathFromIds(p.board_id, p.board_parent_id) %>/thread/<%= p.thread_id %>#p<%= p.id %>"><%= boardLabel({ id: p.board_id, parent_id: p.board_parent_id }) %> — Yanıt No.<%= p.id %> (<%= p.report_count %> bildirim)</a>
       <div class="mod-row-actions">
         <form action="/mod/post/<%= p.id %>/dismiss" method="POST">
           <input type="hidden" name="key" value="<%= key %>">

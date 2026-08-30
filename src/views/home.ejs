@@ -5,21 +5,30 @@
 
 <section class="board-grid">
   <% boards.forEach(function(board) { %>
-    <a class="board-card" href="/b/<%= board.id %>">
-      <div class="board-card-head">
-        <span class="board-tag">/<%= board.id %>/</span>
-        <span class="board-name"><%= board.name %></span>
-      </div>
-      <p class="board-desc"><%= board.description %></p>
-      <div class="board-meta">
-        <span><%= board.threadCount %> konu</span>
-        <% if (board.lastActivity) { %>
-          <span>son aktivite: <%= timeAgo(board.lastActivity) %></span>
-        <% } else { %>
-          <span>henüz konu yok</span>
-        <% } %>
-      </div>
-    </a>
+    <div class="board-card">
+      <a class="board-card-link" href="/b/<%= board.id %>">
+        <div class="board-card-head">
+          <span class="board-tag">/<%= board.id %>/</span>
+          <span class="board-name"><%= board.name %></span>
+        </div>
+        <p class="board-desc"><%= board.description %></p>
+        <div class="board-meta">
+          <span><%= board.threadCount %> konu</span>
+          <% if (board.lastActivity) { %>
+            <span>son aktivite: <%= timeAgo(board.lastActivity) %></span>
+          <% } else { %>
+            <span>henüz konu yok</span>
+          <% } %>
+        </div>
+      </a>
+      <% if (board.subboards.length > 0) { %>
+        <div class="subboard-list">
+          <% board.subboards.forEach(function(sub) { %>
+            <a href="/b/<%= board.id %>/<%= sub.id %>">/<%= sub.id %>/ <%= sub.name %></a>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
   <% }); %>
 </section>
 

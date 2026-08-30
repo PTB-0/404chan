@@ -5,7 +5,11 @@ zamanlı yazılı sohbet odaları içerir.
 
 ## Özellikler
 
-- **Panolar**: `/g/`, `/prog/`, `/web/`, `/sec/`, `/net/`, `/hw/`, `/ai/`, `/mobil/`, `/oyun/`, `/retro/`
+- **Panolar**: `/g/`, `/prog/`, `/web/`, `/sec/`, `/net/`, `/hw/`, `/ai/`, `/mobil/`, `/o/`, `/retro/`,
+  `/k/` (kernel), `/t/` (tutorial), `/a/` (anonimlik), `/biz/` (iş & şirketler), `/ht/` (hackathon)
+- **Alt panolar**: `/mec/` (mekanik) bir üst kategori — kendi genel konularının yanı sıra
+  `/mec/mec-robotik/`, `/mec/mec-elektronik/`, `/mec/mec-otomasyon/` alt panolarını barındırır
+  (Unix dizin mantığı: bir board hem kendi konularını hem alt board'ları içerebilir)
 - Anonim konu açma ve yanıtlama, opsiyonel görsel yükleme (jpg/png/gif/webp)
 - Opsiyonel `İsim#şifre` tripcode desteği
 - Greentext (`>alıntı`) ve `>>123` yanıt bağlantıları

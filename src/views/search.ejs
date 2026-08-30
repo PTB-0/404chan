@@ -16,14 +16,14 @@
   <% results.forEach(function(r) { %>
     <article class="thread-card">
       <div class="thread-card-head">
-        <span class="board-tag">/<%= r.board_id %>/</span>
+        <span class="board-tag"><%= boardLabel({ id: r.board_id, parent_id: r.board_parent_id }) %></span>
         <% if (r.subject) { %><span class="thread-subject"><%= r.subject %></span><% } %>
         <span class="post-time"><%= formatDate(r.created_at) %></span>
         <span class="post-no"><%= r.kind === 'thread' ? 'Konu' : 'Yanıt' %> No.<%= r.post_id %></span>
       </div>
       <div class="post-message"><%- formatMessage(r.message) %></div>
       <div class="thread-card-foot">
-        <a href="/b/<%= r.board_id %>/thread/<%= r.thread_id %>#p<%= r.post_id %>" class="btn-link">Konuya Git &rarr;</a>
+        <a href="<%= boardPathFromIds(r.board_id, r.board_parent_id) %>/thread/<%= r.thread_id %>#p<%= r.post_id %>" class="btn-link">Konuya Git &rarr;</a>
       </div>
     </article>
   <% }); %>

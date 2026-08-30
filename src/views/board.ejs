@@ -1,11 +1,32 @@
+<div class="breadcrumb">
+  <a href="/">&larr; Panolar</a>
+  <% if (board.parent_id) { %>
+    / <a href="/b/<%= board.parent_id %>">/<%= board.parent_id %>/</a>
+  <% } %>
+</div>
+
 <div class="board-header">
-  <h1>/<%= board.id %>/ — <%= board.name %></h1>
+  <h1><%= boardLabel(board) %> — <%= board.name %></h1>
   <p><%= board.description %></p>
 </div>
 
+<% if (subboards.length > 0) { %>
+  <section class="board-grid subboard-grid">
+    <% subboards.forEach(function(sub) { %>
+      <a class="board-card" href="<%= boardPath(sub) %>">
+        <div class="board-card-head">
+          <span class="board-tag"><%= boardLabel(sub) %></span>
+          <span class="board-name"><%= sub.name %></span>
+        </div>
+        <p class="board-desc"><%= sub.description %></p>
+      </a>
+    <% }); %>
+  </section>
+<% } %>
+
 <section class="post-box">
   <h2>Yeni Konu Aç</h2>
-  <form action="/b/<%= board.id %>/new" method="POST" enctype="multipart/form-data" class="post-form">
+  <form action="<%= boardPath(board) %>/new" method="POST" enctype="multipart/form-data" class="post-form">
     <div class="form-row">
       <input type="text" name="name" placeholder="İsim (opsiyonel, Ad#şifre ile tripcode)" maxlength="60">
       <input type="text" name="subject" placeholder="Konu başlığı (opsiyonel)" maxlength="100">
@@ -52,7 +73,7 @@
       <% } %>
 
       <div class="thread-card-foot">
-        <a href="/b/<%= board.id %>/thread/<%= thread.id %>" class="btn-link">
+        <a href="<%= boardPath(board) %>/thread/<%= thread.id %>" class="btn-link">
           Konuya Git — <%= thread.reply_count %> yanıt
         </a>
       </div>

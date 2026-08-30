@@ -8,7 +8,7 @@ const boardsRouter = require('./src/routes/boards');
 const chatRouter = require('./src/routes/chat');
 const modRouter = require('./src/routes/mod');
 const registerChatSocket = require('./src/chatSocket');
-const { formatMessage, timeAgo, formatDate } = require('./src/util');
+const { formatMessage, timeAgo, formatDate, boardPath, boardPathFromIds, boardLabel } = require('./src/util');
 
 const app = express();
 const server = http.createServer(app);
@@ -30,6 +30,9 @@ app.use((req, res, next) => {
   res.locals.formatMessage = formatMessage;
   res.locals.timeAgo = timeAgo;
   res.locals.formatDate = formatDate;
+  res.locals.boardPath = boardPath;
+  res.locals.boardPathFromIds = boardPathFromIds;
+  res.locals.boardLabel = boardLabel;
   next();
 });
 

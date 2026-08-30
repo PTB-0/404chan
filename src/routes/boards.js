@@ -4,17 +4,44 @@ const express = require('express');
 const db = require('../db');
 const upload = require('../upload');
 const { ADMIN_KEY } = require('../config');
-const { parseNameAndTrip, hashDeletePassword, verifyDeletePassword } = require('../util');
+const { parseNameAndTrip, hashDeletePassword, verifyDeletePassword, boardPath } = require('../util');
 
 const router = express.Router();
 
-function getBoardOr404(req, res) {
-  const board = db.prepare('SELECT * FROM boards WHERE id = ?').get(req.params.boardId);
+// Boards mirror a Unix directory tree: a top-level board can be reached
+// directly ("/b/mec"), a board with a parent must be reached through it
+// ("/b/mec/robotik") — same shape as "/b/:boardId" vs "/b/:parentId/:boardId".
+const BOARD_PATH = ['/b/:boardId', '/b/:parentId/:boardId'];
+const THREAD_PATH = BOARD_PATH.map((p) => `${p}/thread/:threadId`);
+const NEW_THREAD_PATH = BOARD_PATH.map((p) => `${p}/new`);
+const REPLY_PATH = THREAD_PATH.map((p) => `${p}/reply`);
+const THREAD_DELETE_PATH = THREAD_PATH.map((p) => `${p}/delete`);
+const THREAD_REPORT_PATH = THREAD_PATH.map((p) => `${p}/report`);
+const POST_DELETE_PATH = THREAD_PATH.map((p) => `${p}/post/:postId/delete`);
+const POST_REPORT_PATH = THREAD_PATH.map((p) => `${p}/post/:postId/report`);
+
+function resolveBoard(req, res) {
+  const { parentId, boardId } = req.params;
+
+  if (parentId) {
+    const board = db.prepare('SELECT * FROM boards WHERE id = ? AND parent_id = ?').get(boardId, parentId);
+    if (!board) {
+      res.status(404).render('404', { title: 'Board bulunamadı' });
+      return null;
+    }
+    return board;
+  }
+
+  const board = db.prepare('SELECT * FROM boards WHERE id = ?').get(boardId);
   if (!board) {
     res.status(404).render('404', { title: 'Board bulunamadı' });
     return null;
   }
   return board;
+}
+
+function getSubboards(boardId) {
+  return db.prepare('SELECT * FROM boards WHERE parent_id = ? ORDER BY sort_order').all(boardId);
 }
 
 function removeUploadedImage(imagePath) {
@@ -29,7 +56,7 @@ function canDelete(providedKey, providedPassword, storedHash) {
 }
 
 router.get('/', (req, res) => {
-  const boards = db.prepare('SELECT * FROM boards ORDER BY sort_order').all();
+  const boards = db.prepare('SELECT * FROM boards WHERE parent_id IS NULL ORDER BY sort_order').all();
   const boardStats = boards.map((b) => {
     const stats = db
       .prepare('SELECT COUNT(*) AS threadCount FROM threads WHERE board_id = ?')
@@ -37,7 +64,13 @@ router.get('/', (req, res) => {
     const latest = db
       .prepare('SELECT bumped_at FROM threads WHERE board_id = ? ORDER BY bumped_at DESC LIMIT 1')
       .get(b.id);
-    return { ...b, threadCount: stats.threadCount, lastActivity: latest ? latest.bumped_at : null };
+    const subboards = getSubboards(b.id);
+    return {
+      ...b,
+      threadCount: stats.threadCount,
+      lastActivity: latest ? latest.bumped_at : null,
+      subboards,
+    };
   });
   res.render('home', { title: '404chan - Teknoloji Panosu', boards: boardStats });
 });
@@ -50,17 +83,21 @@ router.get('/ara', (req, res) => {
     const like = `%${q}%`;
     const threadMatches = db
       .prepare(
-        `SELECT id AS thread_id, board_id, subject, message, created_at, id AS post_id, 'thread' AS kind
-         FROM threads WHERE subject LIKE ? OR message LIKE ?
-         ORDER BY created_at DESC LIMIT 40`
+        `SELECT threads.id AS thread_id, threads.board_id, boards.parent_id AS board_parent_id,
+                threads.subject, threads.message, threads.created_at, threads.id AS post_id, 'thread' AS kind
+         FROM threads JOIN boards ON boards.id = threads.board_id
+         WHERE threads.subject LIKE ? OR threads.message LIKE ?
+         ORDER BY threads.created_at DESC LIMIT 40`
       )
       .all(like, like);
 
     const postMatches = db
       .prepare(
-        `SELECT thread_id, board_id, message, created_at, id AS post_id, 'post' AS kind
-         FROM posts WHERE message LIKE ?
-         ORDER BY created_at DESC LIMIT 40`
+        `SELECT posts.thread_id, posts.board_id, boards.parent_id AS board_parent_id,
+                posts.message, posts.created_at, posts.id AS post_id, 'post' AS kind
+         FROM posts JOIN boards ON boards.id = posts.board_id
+         WHERE posts.message LIKE ?
+         ORDER BY posts.created_at DESC LIMIT 40`
       )
       .all(like);
 
@@ -72,9 +109,11 @@ router.get('/ara', (req, res) => {
   res.render('search', { title: `"${q}" için arama sonuçları`, q, results });
 });
 
-router.get('/b/:boardId', (req, res) => {
-  const board = getBoardOr404(req, res);
+router.get(BOARD_PATH, (req, res) => {
+  const board = resolveBoard(req, res);
   if (!board) return;
+
+  const subboards = getSubboards(board.id);
   const threads = db
     .prepare('SELECT * FROM threads WHERE board_id = ? ORDER BY is_pinned DESC, bumped_at DESC')
     .all(board.id);
@@ -85,11 +124,17 @@ router.get('/b/:boardId', (req, res) => {
       .reverse();
     return { ...t, previewReplies };
   });
-  res.render('board', { title: `/${board.id}/ - ${board.name}`, board, threads: threadsWithPreview });
+
+  res.render('board', {
+    title: `/${board.id}/ - ${board.name}`,
+    board,
+    subboards,
+    threads: threadsWithPreview,
+  });
 });
 
-router.post('/b/:boardId/new', upload.single('image'), (req, res) => {
-  const board = getBoardOr404(req, res);
+router.post(NEW_THREAD_PATH, upload.single('image'), (req, res) => {
+  const board = resolveBoard(req, res);
   if (!board) return;
 
   const message = (req.body.message || '').trim().slice(0, 4000);
@@ -120,11 +165,11 @@ router.post('/b/:boardId/new', upload.single('image'), (req, res) => {
       deletePasswordHash
     );
 
-  res.redirect(`/b/${board.id}/thread/${info.lastInsertRowid}`);
+  res.redirect(`${boardPath(board)}/thread/${info.lastInsertRowid}`);
 });
 
-router.get('/b/:boardId/thread/:threadId', (req, res) => {
-  const board = getBoardOr404(req, res);
+router.get(THREAD_PATH, (req, res) => {
+  const board = resolveBoard(req, res);
   if (!board) return;
   const thread = db
     .prepare('SELECT * FROM threads WHERE id = ? AND board_id = ?')
@@ -135,8 +180,8 @@ router.get('/b/:boardId/thread/:threadId', (req, res) => {
   res.render('thread', { title: thread.subject || `Konu #${thread.id}`, board, thread, posts });
 });
 
-router.post('/b/:boardId/thread/:threadId/reply', upload.single('image'), (req, res) => {
-  const board = getBoardOr404(req, res);
+router.post(REPLY_PATH, upload.single('image'), (req, res) => {
+  const board = resolveBoard(req, res);
   if (!board) return;
   const thread = db
     .prepare('SELECT * FROM threads WHERE id = ? AND board_id = ?')
@@ -145,7 +190,7 @@ router.post('/b/:boardId/thread/:threadId/reply', upload.single('image'), (req, 
 
   const message = (req.body.message || '').trim().slice(0, 4000);
   if (!message && !req.file) {
-    return res.redirect(`/b/${board.id}/thread/${thread.id}`);
+    return res.redirect(req.originalUrl.replace(/\/reply$/, ''));
   }
 
   const { name, tripcode } = parseNameAndTrip(req.body.name);
@@ -172,11 +217,11 @@ router.post('/b/:boardId/thread/:threadId/reply', upload.single('image'), (req, 
     thread.id
   );
 
-  res.redirect(`/b/${board.id}/thread/${thread.id}#bottom`);
+  res.redirect(`${req.originalUrl.replace(/\/reply$/, '')}#bottom`);
 });
 
-router.post('/b/:boardId/thread/:threadId/delete', (req, res) => {
-  const board = getBoardOr404(req, res);
+router.post(THREAD_DELETE_PATH, (req, res) => {
+  const board = resolveBoard(req, res);
   if (!board) return;
   const thread = db
     .prepare('SELECT * FROM threads WHERE id = ? AND board_id = ?')
@@ -194,11 +239,11 @@ router.post('/b/:boardId/thread/:threadId/delete', (req, res) => {
   db.prepare('DELETE FROM posts WHERE thread_id = ?').run(thread.id);
   db.prepare('DELETE FROM threads WHERE id = ?').run(thread.id);
 
-  res.redirect(`/b/${board.id}`);
+  res.redirect(req.originalUrl.replace(/\/thread\/\d+\/delete$/, ''));
 });
 
-router.post('/b/:boardId/thread/:threadId/post/:postId/delete', (req, res) => {
-  const board = getBoardOr404(req, res);
+router.post(POST_DELETE_PATH, (req, res) => {
+  const board = resolveBoard(req, res);
   if (!board) return;
   const post = db
     .prepare('SELECT * FROM posts WHERE id = ? AND thread_id = ? AND board_id = ?')
@@ -215,26 +260,26 @@ router.post('/b/:boardId/thread/:threadId/post/:postId/delete', (req, res) => {
     req.params.threadId
   );
 
-  res.redirect(`/b/${board.id}/thread/${req.params.threadId}`);
+  res.redirect(req.originalUrl.replace(/\/post\/\d+\/delete$/, ''));
 });
 
-router.post('/b/:boardId/thread/:threadId/report', (req, res) => {
-  const board = getBoardOr404(req, res);
+router.post(THREAD_REPORT_PATH, (req, res) => {
+  const board = resolveBoard(req, res);
   if (!board) return;
   db.prepare('UPDATE threads SET report_count = report_count + 1 WHERE id = ? AND board_id = ?').run(
     req.params.threadId,
     board.id
   );
-  res.redirect(`/b/${board.id}/thread/${req.params.threadId}`);
+  res.redirect(req.originalUrl.replace(/\/report$/, ''));
 });
 
-router.post('/b/:boardId/thread/:threadId/post/:postId/report', (req, res) => {
-  const board = getBoardOr404(req, res);
+router.post(POST_REPORT_PATH, (req, res) => {
+  const board = resolveBoard(req, res);
   if (!board) return;
   db.prepare(
     'UPDATE posts SET report_count = report_count + 1 WHERE id = ? AND thread_id = ? AND board_id = ?'
   ).run(req.params.postId, req.params.threadId, board.id);
-  res.redirect(`/b/${board.id}/thread/${req.params.threadId}`);
+  res.redirect(req.originalUrl.replace(/\/post\/\d+\/report$/, ''));
 });
 
 module.exports = router;
