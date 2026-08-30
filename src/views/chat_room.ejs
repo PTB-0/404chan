@@ -1,0 +1,30 @@
+<div class="breadcrumb">
+  <a href="/sohbet">&larr; Sohbet Odaları</a>
+</div>
+
+<div class="chat-room" data-room-id="<%= room.id %>">
+  <div class="chat-room-head">
+    <h1>#<%= room.name %></h1>
+    <p><%= room.description %></p>
+    <span class="chat-user-count"><span id="user-count">0</span> kişi burada</span>
+  </div>
+
+  <div class="chat-messages" id="chat-messages">
+    <% history.forEach(function(msg) { %>
+      <div class="chat-message">
+        <span class="post-name"><%= msg.name %><% if (msg.tripcode) { %> <span class="trip">!<%= msg.tripcode %></span><% } %></span>
+        <span class="post-time"><%= formatDate(msg.created_at) %></span>
+        <div class="post-message"><%- formatMessage(msg.message) %></div>
+      </div>
+    <% }); %>
+  </div>
+
+  <form id="chat-form" class="chat-form">
+    <input type="text" id="chat-name" placeholder="İsim (opsiyonel)" maxlength="60">
+    <input type="text" id="chat-input" placeholder="Mesaj yaz ve Enter'a bas..." maxlength="1000" autocomplete="off">
+    <button type="submit" class="btn">Gönder</button>
+  </form>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/chat.js"></script>

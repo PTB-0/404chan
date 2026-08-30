@@ -1,0 +1,32 @@
+<section class="hero">
+  <h1>404chan</h1>
+  <p>Teknoloji için anonim pano. Bir board seç, konu aç ya da mevcut tartışmalara katıl.</p>
+</section>
+
+<section class="board-grid">
+  <% boards.forEach(function(board) { %>
+    <a class="board-card" href="/b/<%= board.id %>">
+      <div class="board-card-head">
+        <span class="board-tag">/<%= board.id %>/</span>
+        <span class="board-name"><%= board.name %></span>
+      </div>
+      <p class="board-desc"><%= board.description %></p>
+      <div class="board-meta">
+        <span><%= board.threadCount %> konu</span>
+        <% if (board.lastActivity) { %>
+          <span>son aktivite: <%= timeAgo(board.lastActivity) %></span>
+        <% } else { %>
+          <span>henüz konu yok</span>
+        <% } %>
+      </div>
+    </a>
+  <% }); %>
+</section>
+
+<section class="chat-cta">
+  <div>
+    <h2>Canlı Sohbet</h2>
+    <p>Yazılı sohbet odalarında gerçek zamanlı konuş.</p>
+  </div>
+  <a class="btn" href="/sohbet">Sohbet Odalarına Git &rarr;</a>
+</section>

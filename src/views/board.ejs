@@ -1,0 +1,60 @@
+<div class="board-header">
+  <h1>/<%= board.id %>/ — <%= board.name %></h1>
+  <p><%= board.description %></p>
+</div>
+
+<section class="post-box">
+  <h2>Yeni Konu Aç</h2>
+  <form action="/b/<%= board.id %>/new" method="POST" enctype="multipart/form-data" class="post-form">
+    <div class="form-row">
+      <input type="text" name="name" placeholder="İsim (opsiyonel, Ad#şifre ile tripcode)" maxlength="60">
+      <input type="text" name="subject" placeholder="Konu başlığı (opsiyonel)" maxlength="100">
+    </div>
+    <textarea name="message" placeholder="Mesajınız... (>alıntı satırı greentext olur)" rows="4" maxlength="4000"></textarea>
+    <div class="form-row">
+      <input type="file" name="image" accept="image/png,image/jpeg,image/gif,image/webp">
+      <button type="submit" class="btn">Konu Aç</button>
+    </div>
+  </form>
+</section>
+
+<section class="thread-list">
+  <% if (threads.length === 0) { %>
+    <p class="empty-state">Bu boardda henüz konu yok. İlk konuyu sen aç.</p>
+  <% } %>
+  <% threads.forEach(function(thread) { %>
+    <article class="thread-card">
+      <div class="thread-card-head">
+        <% if (thread.is_pinned) { %><span class="pin-badge">📌 Sabit</span><% } %>
+        <% if (thread.subject) { %><span class="thread-subject"><%= thread.subject %></span><% } %>
+        <span class="post-name"><%= thread.name %><% if (thread.tripcode) { %> <span class="trip">!<%= thread.tripcode %></span><% } %></span>
+        <span class="post-time"><%= formatDate(thread.created_at) %></span>
+        <span class="post-no">No.<%= thread.id %></span>
+      </div>
+      <% if (thread.image_path) { %>
+        <a href="<%= thread.image_path %>" target="_blank" class="post-image-link">
+          <img src="<%= thread.image_path %>" alt="<%= thread.image_name %>" class="post-image-thumb">
+        </a>
+      <% } %>
+      <div class="post-message"><%- formatMessage(thread.message) %></div>
+
+      <% if (thread.previewReplies.length > 0) { %>
+        <div class="reply-preview">
+          <% thread.previewReplies.forEach(function(reply) { %>
+            <div class="reply-preview-item" id="p<%= reply.id %>">
+              <span class="post-name"><%= reply.name %></span>
+              <span class="post-no">No.<%= reply.id %></span>
+              <div class="post-message"><%- formatMessage(reply.message) %></div>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+
+      <div class="thread-card-foot">
+        <a href="/b/<%= board.id %>/thread/<%= thread.id %>" class="btn-link">
+          Konuya Git — <%= thread.reply_count %> yanıt
+        </a>
+      </div>
+    </article>
+  <% }); %>
+</section>

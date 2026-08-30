@@ -1,0 +1,19 @@
+<section class="hero">
+  <h1>Sohbet Odaları</h1>
+  <p>Gerçek zamanlı, yazılı sohbet odaları. Kaydolmadan, anonim katıl.</p>
+</section>
+
+<section class="board-grid">
+  <% rooms.forEach(function(room) { %>
+    <a class="board-card" href="/sohbet/<%= room.id %>">
+      <div class="board-card-head">
+        <span class="board-tag">#<%= room.id %></span>
+        <span class="board-name"><%= room.name %></span>
+      </div>
+      <p class="board-desc"><%= room.description %></p>
+      <div class="board-meta">
+        <span><%= room.messageCount %> mesaj</span>
+      </div>
+    </a>
+  <% }); %>
+</section>

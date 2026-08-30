@@ -1,0 +1,52 @@
+<div class="breadcrumb">
+  <a href="/b/<%= board.id %>">&larr; /<%= board.id %>/ - <%= board.name %></a>
+</div>
+
+<article class="thread-card op-post" id="p<%= thread.id %>">
+  <div class="thread-card-head">
+    <% if (thread.subject) { %><span class="thread-subject"><%= thread.subject %></span><% } %>
+    <span class="post-name"><%= thread.name %><% if (thread.tripcode) { %> <span class="trip">!<%= thread.tripcode %></span><% } %></span>
+    <span class="post-time"><%= formatDate(thread.created_at) %></span>
+    <span class="post-no">No.<%= thread.id %></span>
+  </div>
+  <% if (thread.image_path) { %>
+    <a href="<%= thread.image_path %>" target="_blank" class="post-image-link">
+      <img src="<%= thread.image_path %>" alt="<%= thread.image_name %>" class="post-image-thumb">
+    </a>
+  <% } %>
+  <div class="post-message"><%- formatMessage(thread.message) %></div>
+</article>
+
+<section class="post-list">
+  <% posts.forEach(function(post) { %>
+    <article class="thread-card reply-post" id="p<%= post.id %>">
+      <div class="thread-card-head">
+        <span class="post-name"><%= post.name %><% if (post.tripcode) { %> <span class="trip">!<%= post.tripcode %></span><% } %></span>
+        <span class="post-time"><%= formatDate(post.created_at) %></span>
+        <span class="post-no">No.<%= post.id %></span>
+      </div>
+      <% if (post.image_path) { %>
+        <a href="<%= post.image_path %>" target="_blank" class="post-image-link">
+          <img src="<%= post.image_path %>" alt="<%= post.image_name %>" class="post-image-thumb">
+        </a>
+      <% } %>
+      <div class="post-message"><%- formatMessage(post.message) %></div>
+    </article>
+  <% }); %>
+</section>
+
+<span id="bottom"></span>
+
+<section class="post-box">
+  <h2>Yanıtla</h2>
+  <form action="/b/<%= board.id %>/thread/<%= thread.id %>/reply" method="POST" enctype="multipart/form-data" class="post-form">
+    <div class="form-row">
+      <input type="text" name="name" placeholder="İsim (opsiyonel, Ad#şifre ile tripcode)" maxlength="60">
+    </div>
+    <textarea name="message" placeholder="Mesajınız... (>>123 ile yanıt verin)" rows="4" maxlength="4000"></textarea>
+    <div class="form-row">
+      <input type="file" name="image" accept="image/png,image/jpeg,image/gif,image/webp">
+      <button type="submit" class="btn">Yanıtla</button>
+    </div>
+  </form>
+</section>
