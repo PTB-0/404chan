@@ -45,3 +45,9 @@ ADMIN_KEY=cok-gizli-bir-anahtar npm start
 
 Express, better-sqlite3, EJS, Socket.IO — build adımı gerektirmeyen, sunucu
 taraflı basit bir yığın.
+
+
+
+
+<!--I NEED A CHAR FOR THIS PROJECT-->
+
